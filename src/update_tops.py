@@ -26,6 +26,8 @@ async def main() -> None:
 
     async with httpx.AsyncClient(base_url='https://fapi.binance.com', http2=True) as client:
         resp = await client.get('/fapi/v1/ticker/24hr')
+        if resp.is_error:
+            raise Exception(resp.content)
         data = resp.json()
         tickers = [Ticker(**d) for d in data]
 
