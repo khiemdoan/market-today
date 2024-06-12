@@ -6,7 +6,7 @@ on:
 
 jobs:
   update-data:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: checkout repo content
         uses: actions/checkout@v4
@@ -26,7 +26,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python update_p2p.py
+        run: python src/update_p2p.py
 
       - name: get current date
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
