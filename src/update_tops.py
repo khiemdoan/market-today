@@ -12,6 +12,7 @@ import pandas as pd
 from fp.fp import FreeProxy
 from prettytable import PrettyTable
 from pytz import timezone
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 from dtos import Ticker
 from messenger import send_message
@@ -21,19 +22,28 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def main() -> None:
-    logger.info('Start collect data')
-
-    now = datetime.now(tz=timezone('Asia/Ho_Chi_Minh'))
-
+@retry(
+    wait=wait_fixed(1),
+    retry=retry_if_exception_type(httpx.HTTPError),
+    stop=stop_after_attempt(5),
+    reraise=True,
+)
+def _fetch() -> list[Ticker]:
     proxy = FreeProxy(country_id=['JP'], anonym=True, timeout=60).get()
     with httpx.Client(base_url='https://fapi.binance.com', proxy=proxy, http2=True, verify=False, timeout=60) as client:
         resp = client.get('/fapi/v1/ticker/24hr')
         if resp.is_error:
             raise Exception(resp.content)
         data = resp.json()
-        tickers = [Ticker(**d) for d in data]
+        return [Ticker(**d) for d in data]
 
+
+def main() -> None:
+    logger.info('Start collect data')
+
+    now = datetime.now(tz=timezone('Asia/Ho_Chi_Minh'))
+
+    tickers = _fetch()
     tickers = pd.DataFrame([t.model_dump() for t in tickers])
 
     # Top gainers
