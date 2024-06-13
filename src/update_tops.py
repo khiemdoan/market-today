@@ -9,23 +9,26 @@ from math import floor, log
 
 import httpx
 import pandas as pd
+from fp.fp import FreeProxy
 from prettytable import PrettyTable
 from pytz import timezone
 
 from dtos import Ticker
 from messenger import send_message
-from templates import arender
+from templates import render
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
-async def main() -> None:
+def main() -> None:
     logger.info('Start collect data')
 
     now = datetime.now(tz=timezone('Asia/Ho_Chi_Minh'))
 
-    async with httpx.AsyncClient(base_url='https://fapi.binance.com', http2=True) as client:
-        resp = await client.get('/fapi/v1/ticker/24hr')
+    proxy = FreeProxy(country_id=['JP'], anonym=True, timeout=60).get()
+    with httpx.Client(base_url='https://fapi.binance.com', proxy=proxy, http2=True, verify=False, timeout=60) as client:
+        resp = client.get('/fapi/v1/ticker/24hr')
         if resp.is_error:
             raise Exception(resp.content)
         data = resp.json()
@@ -40,8 +43,8 @@ async def main() -> None:
 
     symbols = tops['symbol'].to_list()
     table = _craft_table(['Symbol', 'Change'], tops)
-    message = await arender('top.j2', context={'title': 'Top gainers', 'time': now, 'symbols': symbols, 'table': table})
-    await send_message(message)
+    message = render('top.j2', context={'title': 'Top gainers', 'time': now, 'symbols': symbols, 'table': table})
+    asyncio.run(send_message(message))
 
     # Top losers
     tops = tickers[['symbol', 'price_change_percent']].sort_values(by='price_change_percent')
@@ -50,8 +53,8 @@ async def main() -> None:
 
     symbols = tops['symbol'].to_list()
     table = _craft_table(['Symbol', 'Change'], tops)
-    message = await arender('top.j2', context={'title': 'Top losers', 'time': now, 'symbols': symbols, 'table': table})
-    await send_message(message)
+    message = render('top.j2', context={'title': 'Top losers', 'time': now, 'symbols': symbols, 'table': table})
+    asyncio.run(send_message(message))
 
     # Top tradings
     tops = tickers[['symbol', 'count']].sort_values(by='count', ascending=False)
@@ -60,10 +63,8 @@ async def main() -> None:
 
     symbols = tops['symbol'].to_list()
     table = _craft_table(['Symbol', 'Trade'], tops)
-    message = await arender(
-        'top.j2', context={'title': 'Top tradings', 'time': now, 'symbols': symbols, 'table': table}
-    )
-    await send_message(message)
+    message = render('top.j2', context={'title': 'Top tradings', 'time': now, 'symbols': symbols, 'table': table})
+    asyncio.run(send_message(message))
 
     # Top volumes
     tops = tickers[['symbol', 'quote_volume']].sort_values(by='quote_volume', ascending=False)
@@ -73,8 +74,8 @@ async def main() -> None:
 
     symbols = tops['symbol'].to_list()
     table = _craft_table(['Symbol', 'Volume'], tops)
-    message = await arender('top.j2', context={'title': 'Top volumes', 'time': now, 'symbols': symbols, 'table': table})
-    await send_message(message)
+    message = render('top.j2', context={'title': 'Top volumes', 'time': now, 'symbols': symbols, 'table': table})
+    asyncio.run(send_message(message))
 
 
 def _craft_table(fields: list[str], data: pd.DataFrame) -> str:
@@ -95,4 +96,4 @@ def _format_volume(number) -> str:
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()
