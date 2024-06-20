@@ -2,6 +2,7 @@ __author__ = 'Khiem Doan'
 __github__ = 'https://github.com/khiemdoan'
 __email__ = 'doankhiem.crazy@gmail.com'
 
+from copy import copy
 import logging
 from datetime import datetime
 from math import floor, log
@@ -20,59 +21,56 @@ logger.setLevel(logging.INFO)
 
 
 _client = httpx.Client(base_url='https://scanner.tradingview.com', http2=True)
+_path = '/coin/scan'
+_base_payload = {
+    'markets': ['coin'],
+    "range":[0,20],
+}
 
 
 def get_top_gainers() -> list[TopGainer]:
-    path = '/coin/scan'
-    payload = {
-        'markets': ['coin'],
+    payload = copy(_base_payload)
+    payload.update({
         'columns': ['base_currency', '24h_close_change|5'],
         'sort': {'sortBy': '24h_close_change|5', 'sortOrder': 'desc'},
-        'range': [0, 20],
-    }
-    resp = _client.post(path, json=payload)
+    })
+    resp = _client.post(_path, json=payload)
     data = resp.json()
     data = [{'symbol': d['d'][0], 'change': d['d'][1]} for d in data['data']]
     return [TopGainer(**d) for d in data]
 
 
 def get_top_lossers() -> list[TopLosser]:
-    path = '/coin/scan'
-    payload = {
-        'markets': ['coin'],
+    payload = copy(_base_payload)
+    payload.update({
         'columns': ['base_currency', '24h_close_change|5'],
         'sort': {'sortBy': '24h_close_change|5', 'sortOrder': 'asc'},
-        'range': [0, 20],
-    }
-    resp = _client.post(path, json=payload)
+    })
+    resp = _client.post(_path, json=payload)
     data = resp.json()
     data = [{'symbol': d['d'][0], 'change': d['d'][1]} for d in data['data']]
     return [TopLosser(**d) for d in data]
 
 
 def get_top_transactions() -> list[TopTransaction]:
-    path = '/coin/scan'
-    payload = {
-        'markets': ['coin'],
+    payload = copy(_base_payload)
+    payload.update({
         'columns': ['base_currency', 'txs_count'],
         'sort': {'sortBy': 'txs_count', 'sortOrder': 'desc'},
-        'range': [0, 20],
-    }
-    resp = _client.post(path, json=payload)
+    })
+    resp = _client.post(_path, json=payload)
     data = resp.json()
     data = [{'symbol': d['d'][0], 'transaction': d['d'][1]} for d in data['data']]
     return [TopTransaction(**d) for d in data]
 
 
 def get_top_volumes() -> list[TopVolume]:
-    path = '/coin/scan'
-    payload = {
-        'markets': ['coin'],
+    payload = copy(_base_payload)
+    payload.update({
         'columns': ['base_currency', '24h_vol_cmc'],
         'sort': {'sortBy': '24h_vol_cmc', 'sortOrder': 'desc'},
-        'range': [0, 20],
-    }
-    resp = _client.post(path, json=payload)
+    })
+    resp = _client.post(_path, json=payload)
     data = resp.json()
     data = [{'symbol': d['d'][0], 'volume': d['d'][1]} for d in data['data']]
     return [TopVolume(**d) for d in data]
