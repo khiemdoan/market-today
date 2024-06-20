@@ -1,5 +1,5 @@
 📈 {{ title }}: {% for symbol in symbols -%}
-  <a href="https://www.binance.com/en/futures/{{ symbol }}">{{ symbol }}</a>{% if loop.revindex0 != 0%}, {% endif %}
+  <a href="https://www.tradingview.com/symbols/{{ symbol }}USD/">{{ symbol }}</a>{% if loop.revindex0 != 0%}, {% endif %}
 {%- endfor %}
 🕖 Time: {{ time.strftime('%Y-%m-%d %H:%M:%S') }}
 
