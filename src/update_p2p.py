@@ -2,7 +2,6 @@ __author__ = 'KhiemDH'
 __github__ = 'https://github.com/khiemdoan'
 __email__ = 'doankhiem.crazy@gmail.com'
 
-import asyncio
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -61,6 +60,6 @@ if __name__ == '__main__':
     df.to_csv(data_file, index=False)
 
     message = render('p2p.j2', {'time': now, 'price': price})
-    result = asyncio.run(send_message(message))
+    result = send_message(message)
 
     sys.exit(int(not result))
