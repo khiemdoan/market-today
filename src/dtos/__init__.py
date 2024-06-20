@@ -2,6 +2,11 @@ __author__ = 'Khiem Doan'
 __github__ = 'https://github.com/khiemdoan'
 __email__ = 'doankhiem.crazy@gmail.com'
 
-__all__ = ['Ticker']
+__all__ = [
+    'TopGainer',
+    'TopLosser',
+    'TopTransaction',
+    'TopVolume',
+]
 
-from .ticker import Ticker
+from .tops import TopGainer, TopLosser, TopTransaction, TopVolume
