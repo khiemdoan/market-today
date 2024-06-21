@@ -102,6 +102,7 @@ if __name__ == '__main__':
     data = get_top_gainers()
     df = pd.DataFrame([d.model_dump() for d in data])
     df = df[~df['symbol'].str.contains('USD')]
+    df['change'] = df['change'].apply(lambda x: '{:.2f}%'.format(x))
     symbols = df['symbol'].to_list()
     table = _craft_table(['Symbol', 'Change'], df)
     message = render('top.j2', context={'title': 'Top gainers', 'time': now, 'symbols': symbols, 'table': table})
@@ -111,6 +112,7 @@ if __name__ == '__main__':
     data = get_top_gainers()
     df = pd.DataFrame([d.model_dump() for d in data])
     df = df[~df['symbol'].str.contains('USD')]
+    df['change'] = df['change'].apply(lambda x: '{:.2f}%'.format(x))
     symbols = df['symbol'].to_list()
     table = _craft_table(['Symbol', 'Change'], df)
     message = render('top.j2', context={'title': 'Top lossers', 'time': now, 'symbols': symbols, 'table': table})
