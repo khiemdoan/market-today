@@ -2,8 +2,8 @@ __author__ = 'Khiem Doan'
 __github__ = 'https://github.com/khiemdoan'
 __email__ = 'doankhiem.crazy@gmail.com'
 
-from copy import copy
 import logging
+from copy import copy
 from datetime import datetime
 from math import floor, log
 
@@ -24,7 +24,7 @@ _client = httpx.Client(base_url='https://scanner.tradingview.com', http2=True)
 _path = '/coin/scan'
 _base_payload = {
     'markets': ['coin'],
-    "range":[0,20],
+    'range': [0, 20],
 }
 
 
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     send_message(message)
 
     # Top losers
-    data = get_top_gainers()
+    data = get_top_lossers()
     df = pd.DataFrame([d.model_dump() for d in data])
     df = df[~df['symbol'].str.contains('USD')]
     df['change'] = df['change'].apply(lambda x: '{:.2f}%'.format(x))
