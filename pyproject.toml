@@ -1,9 +1,20 @@
 [tool.isort]
-line_length = 150
+line_length = 120
 
 [tool.ruff]
-line-length = 150
+line-length = 120
 
 [tool.ruff.format]
 quote-style = "single"
 indent-style = "space"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
