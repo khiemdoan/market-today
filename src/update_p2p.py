@@ -40,7 +40,7 @@ if __name__ == '__main__':
         'countries': [],
         'proMerchantAds': False,
         'shieldMerchantAds': False,
-        'filterType': 'all',
+        'filterType': 'tradable',
         'additionalKycVerifyFilter': 0,
         'publisherType': None,
         'payTypes': [],
