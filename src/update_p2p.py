@@ -37,7 +37,7 @@ if __name__ == '__main__':
         'rows': 10,
         'tradeType': 'BUY',
         'asset': 'USDT',
-        'countries': [],
+        'countries': ['VN'],
         'proMerchantAds': False,
         'shieldMerchantAds': False,
         'filterType': 'tradable',
