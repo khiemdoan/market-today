@@ -4,13 +4,19 @@ __email__ = 'doankhiem.crazy@gmail.com'
 
 import sys
 from datetime import datetime
+from io import BytesIO
 from pathlib import Path
 
 import httpx
 import pandas as pd
+import seaborn as sns
+from loguru import logger
+from matplotlib import dates
+from matplotlib import pyplot as plt
+from matplotlib import ticker
 from pandas.errors import EmptyDataError
 
-from messenger import send_message
+from telegram import Telegram
 from templates import render
 
 
@@ -53,13 +59,31 @@ if __name__ == '__main__':
     price = data[1]['adv']['price']
 
     row = pd.DataFrame({'time': [now], 'price': [price]})
-    row = row.astype({'time': 'datetime64[s]', 'price': 'int64'})
     df = pd.concat([df, row], ignore_index=True)
+    df = df.astype({'time': 'datetime64[s]', 'price': 'int64'})
     df.reset_index()
 
     df.to_csv(data_file, index=False)
 
-    message = render('p2p.j2', {'time': now, 'price': price})
-    result = send_message(message)
+    df = df.iloc[-7 * 24 :]
 
-    sys.exit(int(not result))
+    sns.set_style('whitegrid')
+
+    fig = plt.figure(figsize=(10, 10))
+    sns.lineplot(df, x='time', y='price')
+    plt.ylabel('Price (VND)')
+    plt.gca().xaxis.get_label().set_visible(False)
+
+    plt.xticks(rotation=45)
+    plt.gca().xaxis.set_major_formatter(dates.DateFormatter('%Y-%m-%d'))
+    plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(7))
+
+    with BytesIO() as img, Telegram() as tele:
+        fig.savefig(img, format='jpg')
+        img.seek(0)
+
+        caption = render('p2p.j2', {'time': now, 'price': price})
+        logger.info(caption)
+
+        result = tele.send_photo(img, caption)
+        sys.exit(int(not result))
