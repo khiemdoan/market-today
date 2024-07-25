@@ -8,9 +8,9 @@ from pathlib import Path
 
 import httpx
 import pandas as pd
+from messenger import send_message
 from pandas.errors import EmptyDataError
 
-from messenger import send_message
 from templates import render
 
 

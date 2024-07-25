@@ -2,23 +2,19 @@ __author__ = 'Khiem Doan'
 __github__ = 'https://github.com/khiemdoan'
 __email__ = 'doankhiem.crazy@gmail.com'
 
-import logging
 from copy import copy
 from datetime import datetime
 from math import floor, log
 
 import httpx
 import pandas as pd
+from loguru import logger
 from prettytable import PrettyTable
 from pytz import timezone
 
 from dtos import TopGainer, TopLosser, TopTransaction, TopVolume
-from messenger import send_message
+from telegram import Telegram
 from templates import render
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
 
 _client = httpx.Client(base_url='https://scanner.tradingview.com', http2=True)
 _path = '/coin/scan'
@@ -30,10 +26,12 @@ _base_payload = {
 
 def get_top_gainers() -> list[TopGainer]:
     payload = copy(_base_payload)
-    payload.update({
-        'columns': ['base_currency', '24h_close_change|5'],
-        'sort': {'sortBy': '24h_close_change|5', 'sortOrder': 'desc'},
-    })
+    payload.update(
+        {
+            'columns': ['base_currency', '24h_close_change|5'],
+            'sort': {'sortBy': '24h_close_change|5', 'sortOrder': 'desc'},
+        }
+    )
     resp = _client.post(_path, json=payload)
     data = resp.json()
     data = [{'symbol': d['d'][0], 'change': d['d'][1]} for d in data['data']]
@@ -42,10 +40,12 @@ def get_top_gainers() -> list[TopGainer]:
 
 def get_top_lossers() -> list[TopLosser]:
     payload = copy(_base_payload)
-    payload.update({
-        'columns': ['base_currency', '24h_close_change|5'],
-        'sort': {'sortBy': '24h_close_change|5', 'sortOrder': 'asc'},
-    })
+    payload.update(
+        {
+            'columns': ['base_currency', '24h_close_change|5'],
+            'sort': {'sortBy': '24h_close_change|5', 'sortOrder': 'asc'},
+        }
+    )
     resp = _client.post(_path, json=payload)
     data = resp.json()
     data = [{'symbol': d['d'][0], 'change': d['d'][1]} for d in data['data']]
@@ -54,10 +54,12 @@ def get_top_lossers() -> list[TopLosser]:
 
 def get_top_transactions() -> list[TopTransaction]:
     payload = copy(_base_payload)
-    payload.update({
-        'columns': ['base_currency', 'txs_count'],
-        'sort': {'sortBy': 'txs_count', 'sortOrder': 'desc'},
-    })
+    payload.update(
+        {
+            'columns': ['base_currency', 'txs_count'],
+            'sort': {'sortBy': 'txs_count', 'sortOrder': 'desc'},
+        }
+    )
     resp = _client.post(_path, json=payload)
     data = resp.json()
     data = [{'symbol': d['d'][0], 'transaction': d['d'][1]} for d in data['data']]
@@ -66,10 +68,12 @@ def get_top_transactions() -> list[TopTransaction]:
 
 def get_top_volumes() -> list[TopVolume]:
     payload = copy(_base_payload)
-    payload.update({
-        'columns': ['base_currency', '24h_vol_cmc'],
-        'sort': {'sortBy': '24h_vol_cmc', 'sortOrder': 'desc'},
-    })
+    payload.update(
+        {
+            'columns': ['base_currency', '24h_vol_cmc'],
+            'sort': {'sortBy': '24h_vol_cmc', 'sortOrder': 'desc'},
+        }
+    )
     resp = _client.post(_path, json=payload)
     data = resp.json()
     data = [{'symbol': d['d'][0], 'volume': d['d'][1]} for d in data['data']]
@@ -106,7 +110,8 @@ if __name__ == '__main__':
     symbols = df['symbol'].to_list()
     table = _craft_table(['Symbol', 'Change'], df)
     message = render('top.j2', context={'title': 'Top gainers', 'time': now, 'symbols': symbols, 'table': table})
-    send_message(message)
+    with Telegram() as tele:
+        tele.send_message(message)
 
     # Top losers
     data = get_top_lossers()
@@ -116,7 +121,8 @@ if __name__ == '__main__':
     symbols = df['symbol'].to_list()
     table = _craft_table(['Symbol', 'Change'], df)
     message = render('top.j2', context={'title': 'Top lossers', 'time': now, 'symbols': symbols, 'table': table})
-    send_message(message)
+    with Telegram() as tele:
+        tele.send_message(message)
 
     # Top tradings
     data = get_top_transactions()
@@ -125,7 +131,8 @@ if __name__ == '__main__':
     symbols = df['symbol'].to_list()
     table = _craft_table(['Symbol', 'Transaction'], df)
     message = render('top.j2', context={'title': 'Top transaction', 'time': now, 'symbols': symbols, 'table': table})
-    send_message(message)
+    with Telegram() as tele:
+        tele.send_message(message)
 
     # Top volumes
     data = get_top_volumes()
@@ -135,4 +142,5 @@ if __name__ == '__main__':
     symbols = df['symbol'].to_list()
     table = _craft_table(['Symbol', 'Volume'], df)
     message = render('top.j2', context={'title': 'Top volumes', 'time': now, 'symbols': symbols, 'table': table})
-    send_message(message)
+    with Telegram() as tele:
+        tele.send_message(message)

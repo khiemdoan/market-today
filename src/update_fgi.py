@@ -2,21 +2,17 @@ __author__ = 'Khiem Doan'
 __github__ = 'https://github.com/khiemdoan'
 __email__ = 'doankhiem.crazy@gmail.com'
 
-import logging
 import sys
 from datetime import datetime, timedelta
 from io import BytesIO
 
 import httpx
 import matplotlib.pyplot as plt
+from loguru import logger
 from matplotlib.dates import DateFormatter
 
 from dtos import Fgi
-from messenger import send_photo
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
+from telegram import Telegram
 
 _client = httpx.Client(base_url='https://api.alternative.me', http2=True)
 
@@ -52,11 +48,12 @@ if __name__ == '__main__':
     plt.suptitle('Fear & Greed Index')
     plt.tight_layout()
 
-    with BytesIO() as img:
+    with BytesIO() as img, Telegram() as tele:
         fig.savefig(img, dpi=400, format='jpg')
         img.seek(0)
+
         caption = f'FGI ({x[-1]:%d/%m/%Y}): {y[-1]} - {data[-1].value_classification}'
         logger.info(caption)
 
-        result = send_photo(img, caption)
+        result = tele.send_photo(img, caption)
         sys.exit(int(not result))
