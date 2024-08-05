@@ -11,7 +11,7 @@ from prettytable import PrettyTable
 from pytz import timezone
 
 from telegram import Telegram
-from templates import render
+from templates import Render
 from trading_view import TradingView
 
 
@@ -37,6 +37,7 @@ if __name__ == '__main__':
 
     now = datetime.now(tz=timezone('Asia/Ho_Chi_Minh'))
 
+    render = Render()
     with TradingView() as client, Telegram() as tele:
         # Top gainers
         data = client.get_top_gainers()
