@@ -17,7 +17,7 @@ from matplotlib import ticker
 from pandas.errors import EmptyDataError
 
 from telegram import Telegram
-from templates import render
+from templates import Render
 
 
 def load_data(file: Path) -> pd.DataFrame:
@@ -82,6 +82,7 @@ if __name__ == '__main__':
         fig.savefig(img, format='jpg')
         img.seek(0)
 
+        render = Render()
         caption = render('p2p.j2', {'time': now, 'price': price})
         logger.info(caption)
 
