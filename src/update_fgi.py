@@ -5,30 +5,38 @@ __email__ = 'doankhiem.crazy@gmail.com'
 import sys
 from datetime import datetime, timedelta
 from io import BytesIO
+from typing import Self
 
-import httpx
 import matplotlib.pyplot as plt
+from httpx import Client
 from loguru import logger
 from matplotlib.dates import DateFormatter
 
 from dtos import Fgi
 from telegram import Telegram
 
-_client = httpx.Client(base_url='https://api.alternative.me', http2=True)
 
+class FgiClient:
+    def __enter__(self) -> Self:
+        self._client = Client(base_url='https://api.alternative.me', http2=True)
+        return self
 
-def get_fgi() -> list[Fgi]:
-    params = {'limit': 60}
-    resp = _client.get('/fng/', params=params)
-    data = resp.json()
-    return [Fgi(**d) for d in data['data']]
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        self._client.close()
+
+    def get(self) -> list[Fgi]:
+        params = {'limit': 60}
+        resp = self._client.get('/fng/', params=params)
+        data = resp.json()
+        return [Fgi(**d) for d in data['data']]
 
 
 if __name__ == '__main__':
     logger.info('Start collect data')
 
-    data = get_fgi()
-    data = data[::-1]
+    with FgiClient() as client:
+        data = client.get()
+        data = data[::-1]
     x = [datetime.fromtimestamp(int(d.timestamp)) for d in data]
     y = [int(d.value) for d in data]
     classification = data[-1].value_classification.replace(' ', '\n')
