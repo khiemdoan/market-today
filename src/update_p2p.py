@@ -2,7 +2,6 @@ __author__ = 'KhiemDH'
 __github__ = 'https://github.com/khiemdoan'
 __email__ = 'doankhiem.crazy@gmail.com'
 
-import sys
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
@@ -86,5 +85,4 @@ if __name__ == '__main__':
         caption = render('p2p.j2', {'time': now, 'price': price})
         logger.info(caption)
 
-        result = tele.send_photo(img, caption)
-        sys.exit(int(not result))
+        tele.send_photo(img, caption)
