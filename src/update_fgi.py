@@ -2,7 +2,6 @@ __author__ = 'Khiem Doan'
 __github__ = 'https://github.com/khiemdoan'
 __email__ = 'doankhiem.crazy@gmail.com'
 
-import sys
 from datetime import datetime, timedelta
 from io import BytesIO
 from typing import Self
@@ -63,5 +62,4 @@ if __name__ == '__main__':
         caption = f'FGI ({x[-1]:%d/%m/%Y}): {y[-1]} - {data[-1].value_classification}'
         logger.info(caption)
 
-        result = tele.send_photo(img, caption)
-        sys.exit(int(not result))
+        tele.send_photo(img, caption)
