@@ -1,0 +1,8 @@
+Bybit Launchpool
+
+{% for launchpool in launchpools %}
+{{ launchpool.return_coin }}
+  {% for stake_pool in launchpool.stake_pool_list -%}
+  {{ stake_pool.stake_coin }} Pool: {{ stake_pool.apr|round(2) }}% (VIP {{ stake_pool.apr_vip|round(2) }}%)
+  {% endfor -%}
+{% endfor %}
