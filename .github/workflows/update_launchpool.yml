@@ -1,29 +1,29 @@
-name: Update Launchpool
+# name: Update Launchpool
 
-on:
-  schedule:
-    - cron: 0 * * * *
+# on:
+#   schedule:
+#     - cron: 0 * * * *
 
-jobs:
-  update-data:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: checkout repo content
-        uses: actions/checkout@v4
+# jobs:
+#   update-data:
+#     runs-on: ubuntu-24.04
+#     steps:
+#       - name: checkout repo content
+#         uses: actions/checkout@v4
 
-      - name: setup python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: pip
-          cache-dependency-path: requirements.txt
+#       - name: setup python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: '3.12'
+#           cache: pip
+#           cache-dependency-path: requirements.txt
 
-      - name: install python packages
-        run: |
-          pip install -r requirements.txt
+#       - name: install python packages
+#         run: |
+#           pip install -r requirements.txt
 
-      - name: update launchpool
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python src/update_launchpool.py
+#       - name: update launchpool
+#         env:
+#           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+#           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+#         run: python src/update_launchpool.py
