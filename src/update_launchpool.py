@@ -22,4 +22,4 @@ if __name__ == '__main__':
 
     with Telegram() as tele:
         resp = tele.send_message(text)
-        print(resp.text)
+        print(resp)

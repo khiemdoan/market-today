@@ -3,15 +3,15 @@ __github__ = 'https://github.com/khiemdoan'
 __email__ = 'doankhiem.crazy@gmail.com'
 
 import re
-from typing import Self
+from typing import Any, Literal, Self
 
-from httpx import Client, Response
+from httpx import Client
 
 from settings import TelegramSettings
 
 
 class Telegram:
-    escape_chars = r"\_*[]()~`>#+-=|{}.!"
+    escape_pattern = re.compile(rf'([{re.escape(r'\_*[]()~`>#+-=|{}.!')}])')
 
     def __init__(self) -> None:
         self._settings = TelegramSettings()
@@ -23,23 +23,44 @@ class Telegram:
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self._client.close()
 
-    def send_message(self, text: str, preview: bool = False) -> Response:
-        text = re.sub(f"([{re.escape(self.escape_chars)}])", r"\\\1", text)
+    def send_message(
+        self,
+        text: str,
+        *,
+        parse_mode: Literal['HTML', 'MarkdownV2'] | None = None,
+        preview: bool = False,
+    ) -> Any:
+        if parse_mode == 'MarkdownV2':
+            text = re.sub(self.escape_pattern, r'\\\1', text)
         path = f'/bot{self._settings.bot_token}/sendMessage'
         payload = {
             'chat_id': self._settings.chat_id,
             'text': text,
-            'parse_mode': 'MarkdownV2',
+            'parse_mode': parse_mode,
             'disable_web_page_preview': not preview,
         }
-        return self._client.post(path, data=payload)
+        resp = self._client.post(path, data=payload)
+        if not resp.is_success:
+            resp.raise_for_status()
+        return resp.json()
 
-    def send_photo(self, photo: bytes, caption: str) -> Response:
+    def send_photo(
+        self,
+        photo: bytes,
+        caption: str,
+        *,
+        parse_mode: Literal['HTML', 'MarkdownV2'] | None = None,
+    ) -> Any:
+        if parse_mode == 'MarkdownV2':
+            caption = re.sub(self.escape_pattern, r'\\\1', caption)
         path = f'/bot{self._settings.bot_token}/sendPhoto'
         payload = {
             'chat_id': self._settings.chat_id,
             'caption': caption,
-            'parse_mode': 'HTML',
+            'parse_mode': parse_mode,
         }
         files = {'photo': photo}
-        return self._client.post(path, data=payload, files=files)
+        resp = self._client.post(path, data=payload, files=files)
+        if not resp.is_success:
+            resp.raise_for_status()
+        return resp.json()
