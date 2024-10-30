@@ -43,11 +43,11 @@ if __name__ == '__main__':
         data = client.get_top_gainers()
         df = pd.DataFrame([d.model_dump() for d in data])
         df = df[~df['symbol'].str.contains('USD')]
-        df['change'] = df['change'].apply(lambda x: '{:.2f}%'.format(x))
+        df['change'] = df['change'].apply(lambda x: f'{x:.2f}%')
         symbols = df['symbol'].to_list()
         table = _craft_table(['Symbol', 'Change'], df)
         message = render('top.j2', context={'title': 'Top gainers', 'time': now, 'symbols': symbols, 'table': table})
-        tele.send_message(message)
+        tele.send_message(message, parse_mode='HTML')
 
         # Top losers
         data = client.get_top_lossers()
@@ -57,7 +57,7 @@ if __name__ == '__main__':
         symbols = df['symbol'].to_list()
         table = _craft_table(['Symbol', 'Change'], df)
         message = render('top.j2', context={'title': 'Top lossers', 'time': now, 'symbols': symbols, 'table': table})
-        tele.send_message(message)
+        tele.send_message(message, parse_mode='HTML')
 
         # Top tradings
         data = client.get_top_transactions()
@@ -68,7 +68,7 @@ if __name__ == '__main__':
         message = render(
             'top.j2', context={'title': 'Top transaction', 'time': now, 'symbols': symbols, 'table': table}
         )
-        tele.send_message(message)
+        tele.send_message(message, parse_mode='HTML')
 
         # Top volumes
         data = client.get_top_volumes()
@@ -78,4 +78,4 @@ if __name__ == '__main__':
         symbols = df['symbol'].to_list()
         table = _craft_table(['Symbol', 'Volume'], df)
         message = render('top.j2', context={'title': 'Top volumes', 'time': now, 'symbols': symbols, 'table': table})
-        tele.send_message(message)
+        tele.send_message(message, parse_mode='HTML')
