@@ -5,6 +5,7 @@ __email__ = 'doankhiem.crazy@gmail.com'
 from datetime import timedelta
 from io import BytesIO
 
+import numpy as np
 import pandas as pd
 from kand import sma
 from matplotlib import pyplot as plt
@@ -16,7 +17,7 @@ def generate_graph(klines: pd.DataFrame) -> bytes:
     body_width = timedelta(hours=15)
     shadow_width = timedelta(hours=5)
 
-    klines['volume_sma'] = sma(klines.volume, period=10)
+    klines['volume_sma'] = sma(np.array(klines.volume, dtype=np.float64), period=10)
 
     klines = klines.iloc[-50:]
     price = klines.close.iloc[-1]

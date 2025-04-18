@@ -1,3 +1,46 @@
+[project]
+name = "market-today"
+version = "0.1.0"
+description = "Automatically send crypto notifications to Telegram using GitHub Actions."
+authors = [
+    {name = "Khiem Doan", email = "doankhiem.crazy@gmail.com"},
+]
+
+readme = "README.md"
+license = {text = "GPL-3"}
+
+requires-python = ">=3.13"
+
+dependencies = [
+    "pytz==2025.2",
+    "loguru==0.7.3",
+    "httpx[http2]==0.28.1",
+    "fake-useragent==2.2.0",
+    "pandas==2.2.3",
+    "matplotlib==3.10.1",
+    "seaborn==0.13.2",
+    "pydantic==2.11.3",
+    "pydantic-settings==2.8.1",
+    "jinja2==3.1.6",
+    "prettytable==3.16.0",
+    "yfinance==0.2.55",
+    "kand==0.2.2",
+]
+
+[dependency-groups]
+tools = [
+]
+testing = [
+    "pytest",
+    "pytest-asyncio",
+    "icecream",
+    "reloadium",
+]
+linting = [
+    "isort",
+    "ruff",
+]
+
 [tool.isort]
 line_length = 120
 
