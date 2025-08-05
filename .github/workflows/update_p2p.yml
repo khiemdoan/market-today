@@ -28,7 +28,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python src/update_p2p.py
+        run: uv run src/update_p2p.py
 
       - name: Get current date
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
