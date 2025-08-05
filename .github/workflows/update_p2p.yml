@@ -8,30 +8,32 @@ jobs:
   update-data:
     runs-on: ubuntu-24.04
     steps:
-      - name: checkout repo content
+      - name: Checkout repo content
         uses: actions/checkout@v4
 
-      - name: setup python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: pip
-          cache-dependency-path: requirements.txt
+          python-version-file: pyproject.toml
 
-      - name: install python packages
-        run: |
-          pip install -r requirements.txt
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
 
-      - name: update data
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Update data
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python src/update_p2p.py
 
-      - name: get current date
+      - name: Get current date
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
-      - name: push changes
+      - name: Push changes
         uses: actions-x/commit@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
