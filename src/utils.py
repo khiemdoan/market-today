@@ -5,9 +5,8 @@ __email__ = 'doankhiem.crazy@gmail.com'
 from datetime import timedelta
 from io import BytesIO
 
-import numpy as np
 import pandas as pd
-from pandas_ta import sma
+import talib
 from matplotlib import pyplot as plt
 
 
@@ -17,7 +16,7 @@ def generate_graph(klines: pd.DataFrame) -> bytes:
     body_width = timedelta(hours=15)
     shadow_width = timedelta(hours=5)
 
-    klines['volume_sma'] = sma(klines.volume, length=10)
+    klines['volume_sma'] = talib.SMA(klines.volume, 10)
 
     klines = klines.iloc[-50:]
     price = klines.close.iloc[-1]
@@ -51,7 +50,7 @@ def generate_graph(klines: pd.DataFrame) -> bytes:
     axes[1].tick_params(axis='y', labelsize=15)
     axes[1].tick_params(axis='x', labelrotation=30, labelsize=15)
 
-    plt.subplots_adjust(left=0.03, bottom=0.05, right=0.97, top=0.95, wspace=0.05, hspace=0.07)
+    plt.subplots_adjust(left=0.03, bottom=0.1, right=0.97, top=0.95, wspace=0.05, hspace=0.07)
 
     with BytesIO() as img:
         fig.savefig(img, format='jpg')
