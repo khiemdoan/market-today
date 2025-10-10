@@ -4,28 +4,31 @@ on:
   schedule:
     - cron: 0 1-10 * * 1-5
 
+permissions:
+  contents: read
+
 jobs:
   update-data:
     runs-on: ubuntu-24.04
     steps:
-      - name: checkout repo content
-        uses: actions/checkout@v4
+      - name: Checkout repo content
+        uses: actions/checkout@v5
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version-file: pyproject.toml
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
 
       - name: Install dependencies
         run: uv sync --frozen
 
-      - name: Update VN-Index
+      - name: Update VN30
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: uv run src/update_vnindex.py
+        run: uv run src/update_vn30.py
