@@ -10,8 +10,8 @@ import pandas as pd
 from httpx import Client
 
 from telegram import Telegram
-from utils import generate_graph
 from templates import Render
+from utils import generate_graph
 
 
 class StockClient:
