@@ -32,7 +32,7 @@ class VpsResponse(BaseModel):
     v: list[int]    # volumes
 
 
-async def fetch_stock_data(client: AsyncClient, symbol: str) -> tuple[pd.DataFrame]:
+async def fetch_stock_data(client: AsyncClient, symbol: str) -> pd.DataFrame:
     end_time = datetime.now()
     start_time = end_time - timedelta(days=130)
     params = {
@@ -56,7 +56,7 @@ async def fetch_stock_data(client: AsyncClient, symbol: str) -> tuple[pd.DataFra
     })
 
 
-def calc_bollinger_bands(close: pd.Series) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def calc_bollinger_bands(close: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     return talib.BBANDS(close, timeperiod=20)
 
 
@@ -64,7 +64,7 @@ async def main():
     async with AsyncClient() as client:
         data = await asyncio.gather(*[fetch_stock_data(client, symbol) for symbol in vn30_list])
 
-    bbands = await asyncio.gather(*[asyncio.to_thread(calc_bollinger_bands, ohlc['close']) for ohlc in data])
+    bbands = await asyncio.gather(*[asyncio.to_thread(calc_bollinger_bands, ohlc['close'].to_numpy()) for ohlc in data])
     for df, bband in zip(data, bbands):
         df['upper'] = bband[0]
         df['middle'] = bband[1]
@@ -97,8 +97,12 @@ async def main():
             else:
                 continue
 
+            last_close = ohlc_data[symbol]['close'].iloc[-2]
+            current_close = ohlc_data[symbol]['close'].iloc[-1]
+            delta_percent = (current_close - last_close) / last_close * 100
+
             sns.lineplot(ohlc_data[symbol], x='open_time', y='close', ax=axes[i, j])
-            axes[i, j].set_title(symbol, fontsize=15)
+            axes[i, j].set_title(f'{symbol} ({delta_percent:+.2f}%)', fontsize=15)
             axes[i, j].tick_params(axis='y', labelsize=10)
             axes[i, j].tick_params(axis='x', labelrotation=30, labelsize=10)
 
