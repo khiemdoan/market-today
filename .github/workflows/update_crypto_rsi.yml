@@ -1,0 +1,29 @@
+name: Update Crypto RSI
+
+on:
+  schedule:
+    - cron: 0 * * * *
+
+permissions:
+  contents: read
+
+jobs:
+  update-crypto-rsi:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: pyproject.toml
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - run: uv sync --frozen
+
+      - run: uv run src/update_crypto_rsi.py
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

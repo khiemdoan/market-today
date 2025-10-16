@@ -4,6 +4,8 @@ __email__ = 'doankhiem.crazy@gmail.com'
 
 __all__ = [
     'BybitClient',
+    'CoinMarketCapClient',
 ]
 
 from .bybit import BybitClient
+from .coinmarketcap import CoinMarketCapClient
