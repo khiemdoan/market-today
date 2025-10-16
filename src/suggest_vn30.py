@@ -61,7 +61,7 @@ def calc_bollinger_bands(close: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.
 
 
 async def main():
-    async with AsyncClient(base_url='https://histdatafeed.vps.com.vn/', timeout=60.0) as client:
+    async with AsyncClient(base_url='https://histdatafeed.vps.com.vn/', http2=True, timeout=60.0) as client:
         data = await asyncio.gather(*[fetch_stock_data(client, symbol) for symbol in vn30_list])
 
     bbands = await asyncio.gather(*[asyncio.to_thread(calc_bollinger_bands, ohlc['close'].to_numpy()) for ohlc in data])
