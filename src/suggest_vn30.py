@@ -1,38 +1,62 @@
-import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from io import BytesIO
 
-import numpy as np
 import pandas as pd
 import pytz
 import seaborn as sns
 import talib
-from httpx import AsyncClient
+from httpx import Client
 from matplotlib import pyplot as plt
 from pydantic import BaseModel
 
 from telegram import Telegram
 
 vn30_list = (
-    'ACB', 'BCM', 'BID', 'CTG', 'DGC', 'FPT',
-    'GAS', 'GVR', 'HDB', 'HPG', 'LPB', 'MBB',
-    'MSN', 'MWG', 'PLX', 'SAB', 'SHB', 'SSB',
-    'SSI', 'STB', 'TCB', 'TPB', 'VCB', 'VHM',
-    'VIB', 'VIC', 'VJC', 'VNM', 'VPB', 'VRE',
+    'ACB',
+    'BCM',
+    'BID',
+    'CTG',
+    'DGC',
+    'FPT',
+    'GAS',
+    'GVR',
+    'HDB',
+    'HPG',
+    'LPB',
+    'MBB',
+    'MSN',
+    'MWG',
+    'PLX',
+    'SAB',
+    'SHB',
+    'SSB',
+    'SSI',
+    'STB',
+    'TCB',
+    'TPB',
+    'VCB',
+    'VHM',
+    'VIB',
+    'VIC',
+    'VJC',
+    'VNM',
+    'VPB',
+    'VRE',
 )
 
 
 class VpsResponse(BaseModel):
     symbol: str
-    t: list[int]    # timestamps
+    t: list[int]  # timestamps
     c: list[float]  # closing prices
     o: list[float]  # opening prices
     h: list[float]  # high prices
     l: list[float]  # low prices
-    v: list[int]    # volumes
+    v: list[int]  # volumes
 
 
-async def fetch_stock_data(client: AsyncClient, symbol: str) -> pd.DataFrame:
+def fetch_stock_data(symbol: str) -> pd.DataFrame:
     end_time = datetime.now()
     start_time = end_time - timedelta(days=130)
     params = {
@@ -41,35 +65,35 @@ async def fetch_stock_data(client: AsyncClient, symbol: str) -> pd.DataFrame:
         'from': start_time.timestamp(),
         'to': end_time.timestamp(),
     }
-    resp = await client.get('https://histdatafeed.vps.com.vn/tradingview/history', params=params)
-    resp.raise_for_status()
-    data = resp.json()
+
+    with Client(base_url='https://histdatafeed.vps.com.vn/', http2=True, timeout=60.0) as client:
+        resp = client.get('https://histdatafeed.vps.com.vn/tradingview/history', params=params)
+        resp.raise_for_status()
+        data = resp.json()
+
     data = VpsResponse.model_validate(data)
 
-    return pd.DataFrame({
-        'open_time': pd.to_datetime(data.t, unit='s'),
-        'open': data.o,
-        'high': data.h,
-        'low': data.l,
-        'close': data.c,
-        'volume': data.v,
-    })
+    df = pd.DataFrame(
+        {
+            'open_time': pd.to_datetime(data.t, unit='s'),
+            'open': data.o,
+            'high': data.h,
+            'low': data.l,
+            'close': data.c,
+            'volume': data.v,
+        }
+    )
+
+    df['rsi'] = talib.RSI(df['close'], timeperiod=14)
+    df['upper'], df['middle'], df['lower'] = talib.BBANDS(df['close'], timeperiod=14)
+    df['ratio'] = (df['close'] - df['middle']) / (df['upper'] - df['middle'])
+
+    return df
 
 
-def calc_bollinger_bands(close: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    return talib.BBANDS(close, timeperiod=20)
-
-
-async def main():
-    async with AsyncClient(base_url='https://histdatafeed.vps.com.vn/', http2=True, timeout=60.0) as client:
-        data = await asyncio.gather(*[fetch_stock_data(client, symbol) for symbol in vn30_list])
-
-    bbands = await asyncio.gather(*[asyncio.to_thread(calc_bollinger_bands, ohlc['close'].to_numpy()) for ohlc in data])
-    for df, bband in zip(data, bbands):
-        df['upper'] = bband[0]
-        df['middle'] = bband[1]
-        df['lower'] = bband[2]
-        df['ratio'] = (df['close'] - df['middle']) / (df['upper'] - df['middle'])
+def main():
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        data = list(executor.map(fetch_stock_data, vn30_list))
 
     ohlc_data: dict[str, pd.DataFrame] = {}
     for symbol, df in zip(vn30_list, data):
@@ -77,14 +101,14 @@ async def main():
 
     ratio_data: dict[str, float] = {}
     for symbol, df in ohlc_data.items():
-        ratio_data[symbol] = df['ratio'].iloc[-1]
-    ratio_df = pd.DataFrame(
+        ratio_data[symbol] = df['rsi'].iloc[-1]
+    rsi_df = pd.DataFrame(
         ratio_data.items(),
-        columns=['symbol', 'ratio'],
+        columns=['symbol', 'rsi'],
     )
 
-    down_df = ratio_df[ratio_df.ratio < 0].sort_values('ratio', ascending=True)[:5]
-    up_df = ratio_df[ratio_df.ratio > 0].sort_values('ratio', ascending=False)[:5]
+    down_df = rsi_df[rsi_df['rsi'] < 50].sort_values('rsi', ascending=True)[:5]
+    up_df = rsi_df[rsi_df['rsi'] > 50].sort_values('rsi', ascending=False)[:5]
 
     fig, axes = plt.subplots(5, 2, figsize=(30, 15), sharex=True)
 
@@ -101,8 +125,11 @@ async def main():
             current_close = ohlc_data[symbol]['close'].iloc[-1]
             delta_percent = (current_close - last_close) / last_close * 100
 
+            rsi = ohlc_data[symbol]['rsi'].iloc[-1]
+            bb = ohlc_data[symbol]['ratio'].iloc[-1]
+
             sns.lineplot(ohlc_data[symbol], x='open_time', y='close', ax=axes[i, j])
-            axes[i, j].set_title(f'{symbol} ({delta_percent:+.2f}%)', fontsize=15)
+            axes[i, j].set_title(f'{symbol} ({delta_percent:+.2f}%) | RSI: {rsi:.2f} | BB: {bb:.2f}', fontsize=15)
             axes[i, j].tick_params(axis='y', labelsize=10)
             axes[i, j].tick_params(axis='x', labelrotation=30, labelsize=10)
 
@@ -121,4 +148,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()
