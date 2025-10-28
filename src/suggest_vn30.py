@@ -9,6 +9,8 @@ import talib
 from httpx import Client
 from matplotlib import pyplot as plt
 from pydantic import BaseModel
+from loguru import logger
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from telegram import Telegram
 
@@ -56,7 +58,10 @@ class VpsResponse(BaseModel):
     v: list[int]  # volumes
 
 
-def fetch_stock_data(symbol: str) -> pd.DataFrame:
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, max=10))
+def fetch_stock_data(client: Client, symbol: str) -> pd.DataFrame:
+    logger.info(f'Fetching data for {symbol}')
+
     end_time = datetime.now()
     start_time = end_time - timedelta(days=130)
     params = {
@@ -66,10 +71,9 @@ def fetch_stock_data(symbol: str) -> pd.DataFrame:
         'to': end_time.timestamp(),
     }
 
-    with Client(base_url='https://histdatafeed.vps.com.vn/', http2=True, timeout=60.0) as client:
-        resp = client.get('https://histdatafeed.vps.com.vn/tradingview/history', params=params)
-        resp.raise_for_status()
-        data = resp.json()
+    resp = client.get('https://histdatafeed.vps.com.vn/tradingview/history', params=params)
+    resp.raise_for_status()
+    data = resp.json()
 
     data = VpsResponse.model_validate(data)
 
@@ -92,8 +96,11 @@ def fetch_stock_data(symbol: str) -> pd.DataFrame:
 
 
 def main():
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        data = list(executor.map(fetch_stock_data, vn30_list))
+    with (
+        Client(base_url='https://histdatafeed.vps.com.vn/', http2=True, timeout=10.0) as client,
+        ThreadPoolExecutor(max_workers=10) as executor,
+    ):
+        data = list(executor.map(fetch_stock_data, [client] * len(vn30_list), vn30_list))
 
     ohlc_data: dict[str, pd.DataFrame] = {}
     for symbol, df in zip(vn30_list, data):
