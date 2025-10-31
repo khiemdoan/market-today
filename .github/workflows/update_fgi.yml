@@ -6,7 +6,7 @@ on:
 
 jobs:
   update-data:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     steps:
       - name: Checkout repo content
         uses: actions/checkout@v4
