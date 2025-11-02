@@ -85,4 +85,4 @@ if __name__ == '__main__':
         caption = render('p2p.j2', {'time': now, 'price': price})
         logger.info(caption)
 
-        tele.send_photo(img, caption)
+        tele.send_photo(img, caption, parse_mode='HTML')
