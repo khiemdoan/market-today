@@ -71,7 +71,7 @@ async def main() -> None:
     with BytesIO() as img, Telegram() as tele:
         fig.savefig(img, format='jpg')
         img.seek(0)
-        tele.send_photo(img.read(), caption=caption)
+        tele.send_photo(img.read(), caption=caption, parse_mode='HTML')
 
 
 if __name__ == '__main__':
