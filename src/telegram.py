@@ -51,8 +51,7 @@ class Telegram:
             'disable_web_page_preview': not preview,
         }
         resp = self._client.post(path, data=payload)
-        if not resp.is_success:
-            resp.raise_for_status()
+        resp.raise_for_status()
         return resp.json()
 
     def send_photo(
@@ -72,6 +71,5 @@ class Telegram:
         }
         files = {'photo': photo}
         resp = self._client.post(path, data=payload, files=files)
-        if not resp.is_success:
-            resp.raise_for_status()
+        resp.raise_for_status()
         return resp.json()

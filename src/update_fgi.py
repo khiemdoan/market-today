@@ -16,6 +16,7 @@ from matplotlib.dates import DateFormatter
 from pydantic import BaseModel, Field
 
 from telegram import Telegram
+from templates import Render
 
 
 class Fgi(BaseModel):
@@ -132,11 +133,8 @@ if __name__ == '__main__':
         plt.savefig(img, dpi=400, format='jpg')
         img.seek(0)
 
-        caption = (
-            f'FGI ({time:%d/%m/%Y}): {value} - {classification}'
-            '\n'
-            '<a href="https://coinmarketcap.com/charts/fear-and-greed-index/">CoinMarketCap</a>'
-        )
-
+        render = Render()
+        caption = render('fgi.j2', {'time': time, 'value': value, 'classification': classification})
         logger.info(caption)
+
         tele.send_photo(img, caption, parse_mode='HTML')
