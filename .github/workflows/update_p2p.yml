@@ -30,13 +30,12 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: uv run src/update_p2p.py
 
-      - name: Get current date
-        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+      - name: Get current time
+        run: echo "time=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
-      - name: Push changes
-        uses: actions-x/commit@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          message: Updated ${{ env.date }}
-          email: action@github.com
-          name: GitHub Action
+      - name: Commit changes
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git add .
+          git commit -m "Update P2P price ${{ env.time }}"
