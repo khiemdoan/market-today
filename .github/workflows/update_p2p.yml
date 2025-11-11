@@ -39,3 +39,4 @@ jobs:
           git config --global user.name "GitHub Action"
           git add .
           git commit -m "Update P2P price ${{ env.time }}"
+          git push origin main
