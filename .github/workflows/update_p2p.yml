@@ -31,12 +31,17 @@ jobs:
         run: uv run src/update_p2p.py
 
       - name: Get current time
-        run: echo "time=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+        run: echo "time=$(date +'%Y-%m-%d %H-%M-%S')" >> $GITHUB_ENV
 
       - name: Commit changes
         run: |
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
           git config --global user.email "action@github.com"
           git config --global user.name "GitHub Action"
           git add .
-          git commit -m "Update P2P price ${{ env.time }}"
+          git commit -m "Updated ${{ env.time }}"
           git push origin main
