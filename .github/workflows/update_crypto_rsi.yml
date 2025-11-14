@@ -11,19 +11,19 @@ jobs:
   update-crypto-rsi:
     runs-on: ubuntu-slim
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout repo content
+        uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v6
-        with:
-          python-version-file: pyproject.toml
-
-      - uses: astral-sh/setup-uv@v7
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
 
-      - run: uv sync --frozen
+      - name: Install dependencies
+        run: uv sync --frozen
 
-      - run: uv run src/update_crypto_rsi.py
+      - name: Update Crypto RSI
+        run: uv run src/update_crypto_rsi.py
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
