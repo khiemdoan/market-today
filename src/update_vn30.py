@@ -2,64 +2,87 @@ __author__ = 'Khiem Doan'
 __github__ = 'https://github.com/khiemdoan'
 __email__ = 'doankhiem.crazy@gmail.com'
 
-from copy import copy
+from contextlib import AbstractContextManager
 from datetime import datetime
 from typing import Self
 
 import pandas as pd
 from httpx import Client
+from pydantic import BaseModel, Field
 
 from telegram import Telegram
 from templates import Render
 from utils import generate_graph
 
 
-class StockClient:
+class OhlcResponse(BaseModel):
+    time: list[datetime] = Field(alias='t')
+    open: list[float] = Field(alias='o')
+    high: list[float] = Field(alias='h')
+    low: list[float] = Field(alias='l')
+    close: list[float] = Field(alias='c')
+    volume: list[int] = Field(alias='v')
+
+
+class IndexClient(AbstractContextManager):
     def __enter__(self) -> Self:
-        self._client = Client(base_url='https://apipubaws.tcbs.com.vn', http2=True)
+        self._client = Client(base_url='https://api.dnse.com.vn', http2=True)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self._client.close()
 
-    _params = {
-        'resolution': 'D',
-        'type': 'index',
-        'countBack': 100,
-    }
-
     def _get_data(self, params: dict) -> pd.DataFrame:
-        data = self._client.get('/stock-insight/v2/stock/bars-long-term', params=params).json()
-        df = pd.DataFrame(data['data'])
-        df.rename(columns={'tradingDate': 'open_time'}, inplace=True)
-        df['open_time'] = pd.to_datetime(df['open_time'])
-        return df
+        resp = self._client.get('/chart-api/v2/ohlcs/index', params=params)
+        resp.raise_for_status()
+
+        print(resp.url)
+
+        data = OhlcResponse.model_validate_json(resp.content)
+
+        return pd.DataFrame(
+            {
+                'time': data.time,
+                'open': data.open,
+                'high': data.high,
+                'low': data.low,
+                'close': data.close,
+                'volume': data.volume,
+            }
+        )
 
     def get_vnindex(self) -> pd.DataFrame:
-        params = copy(self._params)
-        params.update({'ticker': 'VNINDEX', 'to': int(datetime.now().timestamp())})
+        to_time = int(datetime.now().timestamp())
+        from_time = to_time - 100 * 24 * 60 * 60
+        params = {'symbol': 'VNINDEX', 'from': from_time, 'to': to_time, 'resolution': '1D'}
         return self._get_data(params)
 
     def get_vn30(self) -> pd.DataFrame:
-        params = copy(self._params)
-        params.update({'ticker': 'VN30', 'to': int(datetime.now().timestamp())})
+        to_time = int(datetime.now().timestamp())
+        from_time = to_time - 100 * 24 * 60 * 60
+        params = {'symbol': 'VN30', 'from': from_time, 'to': to_time, 'resolution': '1D'}
         return self._get_data(params)
 
 
 if __name__ == '__main__':
-    with StockClient() as client:
-        data = client.get_vn30()
+    with IndexClient() as client:
+        df = client.get_vn30()
 
-    date = data.open_time.iloc[-1]
-    value = data.close.iloc[-1]
+    date = df.time.iloc[-1]
+    value = df.close.iloc[-1]
 
     render = Render()
-    caption = render('vn30.j2', context={
-        'date': date,
-        'value': value,
-        'delta': value - data.close.iloc[-2],
-    })
-    img = generate_graph(data)
+    caption = render(
+        'vn30.j2',
+        context={
+            'date': date,
+            'value': value,
+            'delta': value - df.close.iloc[-2],
+        },
+    )
+
+    df['open_time'] = pd.to_datetime(df['time'], unit='s')
+    img = generate_graph(df)
 
     with Telegram() as tele:
         tele.send_photo(img, caption=caption)
