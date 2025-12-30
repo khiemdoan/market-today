@@ -1,0 +1,20 @@
+{
+  "name": "interest-rate-project",
+  "version": "1.0.0",
+  "description": "Interest rate crawler and Telegram bot",
+  "main": "sendChartToTelegram.js",
+  "scripts": {
+    "send-telegram": "node src/sendChartToTelegram.js"
+  },
+  "keywords": [
+    "interest-rate",
+    "banking",
+    "crawler",
+    "telegram"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.3.1"
+  }
+}
