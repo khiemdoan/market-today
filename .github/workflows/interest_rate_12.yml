@@ -1,14 +1,14 @@
-name: Send Chart to Telegram
+name: Interest Rate 12
 
 on:
   schedule:
-    - cron: 30 1 * * *
+    - cron: 0 0 * * *
 
 permissions:
   contents: read
 
 jobs:
-  send-chart:
+  interest-rate-12:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo content
@@ -23,8 +23,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Send chart to Telegram
-        run: npm run send-telegram
+      - name: Run interest rate 12
+        run: npm run interest-rate-12
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
