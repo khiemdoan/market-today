@@ -2,9 +2,9 @@
   "name": "interest-rate-project",
   "version": "1.0.0",
   "description": "Interest rate crawler and Telegram bot",
-  "main": "sendChartToTelegram.js",
+  "main": "interest_rate.js",
   "scripts": {
-    "send-telegram": "node src/sendChartToTelegram.js"
+    "interest-rate-12": "node src/interest_rate.js"
   },
   "keywords": [
     "interest-rate",
