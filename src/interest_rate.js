@@ -1,4 +1,9 @@
-require('dotenv').config();
+import 'dotenv/config';
+import { fileURLToPath } from 'url';
+import { saveInterestRate } from './save_interest_rate.ts';
+
+const __filename = fileURLToPath(import.meta.url);
+
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 let TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || process.argv[2];
@@ -16,7 +21,11 @@ async function fetchInterestRates() {
     
     if (!apiData?.Success || !Array.isArray(apiData.Data)) return [];
     
-    return apiData.Data.map(bank => {
+    return apiData.Data;
+}
+
+function transformForChart(banks) {
+    return banks.map(bank => {
         const getRate = (deposit) => {
             const rate = bank.interestRates?.find(r => r.deposit === deposit);
             return rate?.value ?? 'N/A';
@@ -113,13 +122,15 @@ async function sendChartToTelegram(chatId, imageBuffer) {
 async function main() {
     try {
         console.log('🚀 Starting...');
-        const interestRates = await fetchInterestRates();
-        console.log(`✅ Fetched ${interestRates.length} banks`);
+        const rawBankData = await fetchInterestRates();
         
-        const chartImage = await generateChartImage(interestRates);
-        console.log(`✅ Chart generated (${(chartImage.length / 1024).toFixed(2)} KB)`);
+        const chartData = transformForChart(rawBankData);
+        const chartImage = await generateChartImage(chartData);
+
         
         await sendChartToTelegram(TELEGRAM_CHAT_ID, chartImage);
+        await saveInterestRate(rawBankData);
+
         console.log('🎉 Done!');
         process.exit(0);
     } catch (error) {
@@ -128,4 +139,4 @@ async function main() {
     }
 }
 
-if (require.main === module) main();
+if (process.argv[1] === __filename) main();

@@ -2,6 +2,7 @@
   "name": "interest-rate-project",
   "version": "1.0.0",
   "description": "Interest rate crawler and Telegram bot",
+  "type": "module",
   "main": "interest_rate.js",
   "scripts": {
     "interest-rate-12": "node src/interest_rate.js"
