@@ -1,135 +1,94 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import pl, { DataFrame } from "nodejs-polars";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-export interface Root {
-  id: string;
-  name: string;
-  symbol: string;
-  icon: string;
-  interestRates: InterestRate[];
+interface BankRecord {
+    id: string;
+    name: string;
+    symbol: string;
+    icon: string;
+    interestRates: InterestRate[];
+}
+interface InterestRate {
+    deposit: number;
+    value: number;
 }
 
-export interface InterestRate {
-  deposit: number;
-  value: number;
-}
-
-
-const DATA_DIR = path.join(__dirname, "..", "data");
-const TERM_MONTHS = [0, 1, 3, 6, 9, 12, 18, 24];
-const HEADERS = [
-  "date",
-  "bank",
-  "no_fixed_term",
-  "1_month",
-  "3_months",
-  "6_months",
-  "9_months",
-  "12_months",
-  "18_months",
-  "24_months",
-];
-
-const checkDirExist = (dir: string): void => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+const FILE_NAME = fileURLToPath(import.meta.url);
+const DIR_NAME = path.dirname(FILE_NAME);
+const DATA_DIR = path.join(DIR_NAME, "..", "data");
+const FILE_PATH = path.join(DATA_DIR, "interest_rates.csv");
+const MONTH_KEY = {
+    0: "no_fixed_term",
+    1: "1_month",
+    3: "3_months",
+    6: "6_months",
+    9: "9_months",
+    12: "12_months",
+    18: "18_months",
+    24: "24_months",
 };
 
-const buildKey = (date: string, bank: string): string =>
-  `${date}|${bank}`;
+const MONTHS = Object.keys(MONTH_KEY).map(Number);
 
-const buildRateMap = (
-  interestRates: InterestRate[] = []
-): Map<number, number> => {
-  return new Map(
-    interestRates.map((r) => [r.deposit, r.value])
-  );
+const checkDirExist = () => {
+    if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
 };
 
-const getRate = (
-  rateMap: Map<number, number>,
-  month: number
-): number | string =>
-  rateMap.get(month) ?? "N/A";
-
-
-const readCSV = (filepath: string): string[] => {
-  if (!fs.existsSync(filepath)) return [];
-
-  const lines = fs.readFileSync(filepath, "utf8").trim().split("\n");
-  lines.shift();
-  return lines;
+const readExistingCsv = async (): Promise<DataFrame> => {
+    let df = pl.DataFrame([]);
+    if (!fs.existsSync(FILE_PATH)) return df;
+    df = await pl.readCSV(FILE_PATH, {
+        hasHeader: true,
+        dtypes: {
+            date: pl.Utf8,
+            bank: pl.Utf8,
+            no_fixed_term: pl.Float64,
+            "1_month": pl.Float64,
+            "3_months": pl.Float64,
+            "6_months": pl.Float64,
+            "9_months": pl.Float64,
+            "12_months": pl.Float64,
+            "18_months": pl.Float64,
+            "24_months": pl.Float64,
+        },
+    });
+    return df;
 };
 
-const writeCSV = (filepath: string, rows: string[]): void => {
-  const content =
-    [HEADERS.join(","), ...rows].join("\n") + "\n";
-  fs.writeFileSync(filepath, content, "utf8");
+const transformBankRecordsToRows = (banks: BankRecord[], date: string) => {
+    const transformOneBank = (bank: BankRecord) => {
+        const row: Record<string, string | number | null> = {
+            date,
+            bank: bank.name,
+        };
+
+        for (const term of MONTHS) {
+            const key = MONTH_KEY[term as keyof typeof MONTH_KEY];
+            row[key] =
+                bank.interestRates.find((r) => r.deposit === term)?.value ??
+                null;
+        }
+        return row;
+    };
+
+    return banks.map(transformOneBank);
 };
 
-const parseRowMeta = (row: string) => {
-  const [date, bank] = row.split(",", 2);
-  return {
-    date,
-    bank: bank.replace(/"/g, ""),
-  };
-};
+export const saveInterestRate = async (banks: BankRecord[]) => {
+    if (!banks.length) return;
+    checkDirExist();
 
-const buildRow = (
-  date: string,
-  bank: string,
-  interestRates: InterestRate[]
-): string => {
-  const rateMap = buildRateMap(interestRates);
+    const date = new Date().toISOString().slice(0, 10);
+    const oldDf = await readExistingCsv();
+    const newDf = pl.DataFrame(transformBankRecordsToRows(banks, date));
 
-  const values = TERM_MONTHS.map((m) =>
-    getRate(rateMap, m)
-  );
+    const finalDf = pl
+        .concat([oldDf, newDf])
+        .unique({ subset: ["date", "bank"], keep: "last" });
 
-  return [date, `"${bank}"`, ...values].join(",");
-};
-
-const mergeRows = (
-  existingRows: string[],
-  newData: Root[],
-  dateFormatted: string
-): string[] => {
-  const rowMap = new Map<string, string>();
-
-  existingRows.forEach((row) => {
-    const { date, bank } = parseRowMeta(row);
-    rowMap.set(buildKey(date, bank), row);
-  });
-
-  newData.forEach((item) => {
-    const key = buildKey(dateFormatted, item.name);
-    const row = buildRow(
-      dateFormatted,
-      item.name,
-      item.interestRates
-    );
-    rowMap.set(key, row);
-  });
-
-  return Array.from(rowMap.values());
-};
-
-
-export const saveInterestRate = (banks: Root[]): void | null => {
-  if (!banks.length) return null;
-
-  checkDirExist(DATA_DIR);
-
-  const dateFormatted = new Date().toLocaleDateString("vi-VN");
-  const filepath = path.join(DATA_DIR, "interest_rates.csv");
-
-  const existingRows = readCSV(filepath);
-  const rows = mergeRows(existingRows, banks, dateFormatted);
-
-  writeCSV(filepath, rows);
+    await finalDf.writeCSV(FILE_PATH);
 };
