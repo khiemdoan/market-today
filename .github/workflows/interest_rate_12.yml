@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   interest-rate-12:
+    if: github.repository_owner == 'khiemdoan'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo content
