@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   update-data:
+    if: github.repository_owner == 'khiemdoan'
     runs-on: ubuntu-slim
     steps:
       - name: Checkout repo content
