@@ -24,8 +24,8 @@ class DnseClient(AbstractContextManager):
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self._client.close()
 
-    def _get_data(self, params: dict) -> pd.DataFrame:
-        resp = self._client.get('/chart-api/v2/ohlcs/index', params=params)
+    def _get_data(self, url: str, params: dict) -> pd.DataFrame:
+        resp = self._client.get(url, params=params)
         resp.raise_for_status()
 
         print(resp.url)
@@ -43,14 +43,26 @@ class DnseClient(AbstractContextManager):
             }
         )
 
+    def _get_data_index(self, params: dict) -> pd.DataFrame:
+        return self._get_data('/chart-api/v2/ohlcs/index', params)
+
+    def _get_data_stock(self, params: dict) -> pd.DataFrame:
+        return self._get_data('/chart-api/v2/ohlcs/stock', params)
+
     def get_vnindex(self) -> pd.DataFrame:
         to_time = int(datetime.now().timestamp())
         from_time = to_time - 100 * 24 * 60 * 60
         params = {'symbol': 'VNINDEX', 'from': from_time, 'to': to_time, 'resolution': '1D'}
-        return self._get_data(params)
+        return self._get_data_index(params)
 
     def get_vn30(self) -> pd.DataFrame:
         to_time = int(datetime.now().timestamp())
         from_time = to_time - 100 * 24 * 60 * 60
         params = {'symbol': 'VN30', 'from': from_time, 'to': to_time, 'resolution': '1D'}
-        return self._get_data(params)
+        return self._get_data_index(params)
+
+    def get_stock(self, symbol: str, days: int = 130) -> pd.DataFrame:
+        to_time = int(datetime.now().timestamp())
+        from_time = to_time - days * 24 * 60 * 60
+        params = {'symbol': symbol, 'from': from_time, 'to': to_time, 'resolution': '1D'}
+        return self._get_data_stock(params)
