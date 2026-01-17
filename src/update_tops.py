@@ -4,11 +4,11 @@ __email__ = 'doankhiem.crazy@gmail.com'
 
 from datetime import datetime
 from math import floor, log
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from loguru import logger
 from prettytable import PrettyTable
-from pytz import timezone
 
 from telegram import Telegram
 from templates import Render
@@ -35,7 +35,7 @@ def _format_volume(number) -> str:
 if __name__ == '__main__':
     logger.info('Start collect data')
 
-    now = datetime.now(tz=timezone('Asia/Ho_Chi_Minh'))
+    now = datetime.now(tz=ZoneInfo('Asia/Ho_Chi_Minh'))
 
     render = Render()
     with TradingView() as client, Telegram() as tele:
