@@ -2,13 +2,13 @@ __author__ = 'Khiem Doan'
 __github__ = 'https://github.com/khiemdoan'
 __email__ = 'doankhiem.crazy@gmail.com'
 
-import asyncio
 from datetime import datetime
 from io import BytesIO
+from zoneinfo import ZoneInfo
 
 import pandas as pd
-import pytz
 import seaborn as sns
+from loguru import logger
 from matplotlib import pyplot as plt
 
 from clients import CoinMarketCapClient
@@ -16,10 +16,17 @@ from telegram import Telegram
 from templates import Render
 
 
-async def main() -> None:
-    async with CoinMarketCapClient() as client:
-        overall = await client.fetch_overral_rsi()
-        data = await client.fetch_rsi()
+def main() -> None:
+    with CoinMarketCapClient() as client:
+        overall = client.fetch_overral_rsi()
+
+    logger.info(f'Overall RSI: {overall}')
+    if 30 < overall.average_rsi < 70:
+        logger.info('RSI is neutral, no need to send report.')
+        return
+
+    with CoinMarketCapClient() as client:
+        data = client.fetch_rsi()
 
     df = pd.DataFrame([row.model_dump() for row in data])
 
@@ -55,7 +62,7 @@ async def main() -> None:
     elif overall.average_rsi > 70:
         conclude = 'Overbought'
 
-    now = datetime.now(pytz.timezone('Asia/Ho_Chi_Minh'))
+    now = datetime.now(tz=ZoneInfo('Asia/Ho_Chi_Minh'))
     render = Render()
     caption = render(
         'crypto_rsi.j2',
@@ -75,4 +82,4 @@ async def main() -> None:
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()
