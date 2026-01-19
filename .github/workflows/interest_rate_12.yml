@@ -3,9 +3,10 @@ name: Interest Rate 12
 on:
   schedule:
     - cron: 0 0 * * *
+  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   interest-rate-12:
@@ -29,4 +30,21 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+      - name: Get current time
+        run: echo "time=$(date +'%Y-%m-%d %H-%M-%S')" >> $GITHUB_ENV
+
+      - name: Commit changes
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git add .
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "Updated interest rates ${{ env.time }}"
+          git push origin main
 
