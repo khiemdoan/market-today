@@ -2,12 +2,12 @@ __author__ = 'Khiem Doan'
 __github__ = 'https://github.com/khiemdoan'
 __email__ = 'doankhiem.crazy@gmail.com'
 
-from contextlib import AbstractAsyncContextManager
+from contextlib import AbstractContextManager
 from datetime import datetime
 from typing import Self
 
 from fake_useragent import UserAgent
-from httpx import AsyncClient, Client, Request
+from httpx import Client, Request
 from pydantic import BaseModel, Field
 
 
@@ -88,12 +88,12 @@ class RsiOverallResponse(BaseModel):
     data: RsiOverall
 
 
-class CoinMarketCapClient(AbstractAsyncContextManager):
+class CoinMarketCapClient(AbstractContextManager):
     def __init__(self) -> None:
         self._ua = UserAgent()
 
-    async def __aenter__(self) -> Self:
-        self._client = AsyncClient(
+    def __enter__(self) -> Self:
+        self._client = Client(
             base_url='https://api.coinmarketcap.com',
             http2=True,
             event_hooks={
@@ -102,27 +102,26 @@ class CoinMarketCapClient(AbstractAsyncContextManager):
         )
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
-        await self._client.aclose()
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        self._client.close()
 
-    async def _random_user_agent(self, request: Request) -> None:
+    def _random_user_agent(self, request: Request) -> None:
         request.headers['User-Agent'] = self._ua.random
 
-    async def fetch_overral_rsi(self) -> RsiOverralDetail:
+    def fetch_overral_rsi(self) -> RsiOverralDetail:
         params = {
             'timeframe': '1h',
             'rsiPeriod': 14,
             'volume24hRange.min': 1000000,
             'marketCapRange.min': 50000000,
         }
-        resp = await self._client.get('data-api/v3/cryptocurrency/rsi/heatmap/overall', params=params)
-        if not resp.is_success:
-            resp.raise_for_status()
+        resp = self._client.get('data-api/v3/cryptocurrency/rsi/heatmap/overall', params=params)
+        resp.raise_for_status()
 
         resp = RsiOverallResponse.model_validate_json(resp.content)
         return resp.data.overall
 
-    async def fetch_rsi(self) -> list[Rsi]:
+    def fetch_rsi(self) -> list[Rsi]:
         params = {
             'limit': 10,
             'rsiPeriod': 14,
@@ -130,9 +129,8 @@ class CoinMarketCapClient(AbstractAsyncContextManager):
             'marketCapRange.min': 50000000,
             'sort': 'rank',
         }
-        resp = await self._client.get('/data-api/v3/cryptocurrency/rsi/heatmap/table', params=params)
-        if not resp.is_success:
-            resp.raise_for_status()
+        resp = self._client.get('/data-api/v3/cryptocurrency/rsi/heatmap/table', params=params)
+        resp.raise_for_status()
 
         resp = RsiResponse.model_validate_json(resp.content)
         return [

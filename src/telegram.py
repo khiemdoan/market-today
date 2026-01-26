@@ -3,6 +3,8 @@ __github__ = 'https://github.com/khiemdoan'
 __email__ = 'doankhiem.crazy@gmail.com'
 
 import re
+from contextlib import AbstractContextManager
+from io import BytesIO
 from typing import Any, Literal, Self
 
 from httpx import Client
@@ -21,7 +23,7 @@ class TelegramSettings(BaseSettings):
     )
 
 
-class Telegram:
+class Telegram(AbstractContextManager):
     escape_pattern = re.compile(rf'([{re.escape(r"\_*[]()~`>#+-=|{}.!")}])')
 
     def __init__(self) -> None:
@@ -56,7 +58,7 @@ class Telegram:
 
     def send_photo(
         self,
-        photo: bytes,
+        photo: bytes | BytesIO,
         caption: str,
         *,
         parse_mode: Literal['HTML', 'MarkdownV2'] | None = None,
@@ -69,6 +71,9 @@ class Telegram:
             'caption': caption,
             'parse_mode': parse_mode,
         }
+        if isinstance(photo, BytesIO):
+            photo.seek(0)
+            photo = photo.read()
         files = {'photo': photo}
         resp = self._client.post(path, data=payload, files=files)
         resp.raise_for_status()
