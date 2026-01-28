@@ -1,0 +1,11 @@
+🪙 <b>Gold Price Update</b>
+
+📅 Date: {{ date.strftime('%Y-%m-%d') }}
+💰 Current Price: ${{ "%.2f"|format(value) }}
+{% if delta > 0 %}
+📈 Change: +${{ "%.2f"|format(delta) }} (+{{ "%.2f"|format(delta/value*100) }}%)
+{% else %}
+📉 Change: ${{ "%.2f"|format(delta) }} ({{ "%.2f"|format(delta/value*100) }}%)
+{% endif %}
+
+#Gold #XAU #Commodities
