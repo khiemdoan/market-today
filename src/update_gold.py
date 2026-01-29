@@ -1,19 +1,19 @@
-from clients.commodities import CommoditiesClient
+from clients import YahooClient
 from graph import draw_klines
 from telegram import Telegram
 from templates import Render
 
 
 def main() -> None:
-    with CommoditiesClient() as client:
+    with YahooClient() as client:
         df = client.get_gold()
 
-    if df.height < 2:
+    if df.shape[0] < 2:
         raise RuntimeError("Not enough data to send signal")
 
-    date = df[-1, "open_time"]
-    value = df[-1, "close"]
-    prev = df[-2, "close"]
+    date = df.iloc[-1]["open_time"]
+    value = df.iloc[-1]["close"]
+    prev = df.iloc[-2]["close"]
     delta = value - prev
 
     caption = Render()(
@@ -31,5 +31,5 @@ def main() -> None:
         tele.send_photo(img, caption=caption)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
