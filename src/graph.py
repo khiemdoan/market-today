@@ -26,7 +26,7 @@ def draw_klines(klines: pd.DataFrame) -> bytes:
 
     up_color = 'lime'
     down_color = 'tomato'
-    delta_time = klines['open_time'].diff().max()
+    delta_time = klines['open_time'].diff().min()
     body_width = delta_time * 0.6
     shadow_width = delta_time * 0.2
 
