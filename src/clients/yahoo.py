@@ -16,7 +16,7 @@ class YahooClient(AbstractContextManager):
         ticker = yf.Ticker(symbol)
         history = ticker.history(period=period).reset_index()
 
-        return history.rename(
+        history = history.rename(
             columns={
                 'Date': 'open_time',
                 'Open': 'open',
@@ -26,6 +26,9 @@ class YahooClient(AbstractContextManager):
                 'Volume': 'volume',
             }
         )
+        history['open_time'] = pd.to_datetime(history['open_time']).dt.tz_convert(None)
+        history['volume'] = history['volume'].astype('float64')
+        return history
 
     def get_gold(self, period: str = '2mo') -> pd.DataFrame:
         return self._get_data('GC=F', period)
