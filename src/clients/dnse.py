@@ -26,13 +26,12 @@ class DnseClient(AbstractContextManager):
 
     def _get_data(self, url: str, params: dict) -> pd.DataFrame:
         resp = self._client.get(url, params=params)
-        resp.raise_for_status()
-
         print(resp.url)
+        resp.raise_for_status()
 
         data = OhlcResponse.model_validate_json(resp.content)
 
-        return pd.DataFrame(
+        df = pd.DataFrame(
             {
                 'time': data.time,
                 'open': data.open,
@@ -42,6 +41,9 @@ class DnseClient(AbstractContextManager):
                 'volume': data.volume,
             }
         )
+        df['open_time'] = pd.to_datetime(df['time']).dt.tz_localize(None)
+        df['volume'] = df['volume'].astype('float64')
+        return df
 
     def _get_data_index(self, params: dict) -> pd.DataFrame:
         return self._get_data('/chart-api/v2/ohlcs/index', params)
