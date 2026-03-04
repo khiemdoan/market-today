@@ -2,19 +2,18 @@ __author__ = 'Khiem Doan'
 __github__ = 'https://github.com/khiemdoan'
 __email__ = 'doankhiem.crazy@gmail.com'
 
-import pandas as pd
-
 from clients import DnseClient
+from graph import draw_klines
 from telegram import Telegram
 from templates import Render
-from utils import generate_graph
 
 if __name__ == '__main__':
     with DnseClient() as client:
         df = client.get_vn30()
 
-    date = df.time.iloc[-1]
+    date = df.open_time.iloc[-1]
     value = df.close.iloc[-1]
+    value_prev = df.close.iloc[-2]
 
     render = Render()
     caption = render(
@@ -22,12 +21,13 @@ if __name__ == '__main__':
         context={
             'date': date,
             'value': value,
-            'delta': value - df.close.iloc[-2],
+            'delta': value - value_prev,
         },
     )
 
-    df['open_time'] = pd.to_datetime(df['time'], unit='s')
-    img = generate_graph(df)
+    img = draw_klines(df)
+    with open('vn30.png', 'wb') as f:
+        f.write(img)
 
-    with Telegram() as tele:
-        tele.send_photo(img, caption=caption)
+    # with Telegram() as tele:
+    #     tele.send_photo(img, caption=caption)
