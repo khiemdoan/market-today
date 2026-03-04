@@ -26,8 +26,6 @@ if __name__ == '__main__':
     )
 
     img = draw_klines(df)
-    with open('vn30.png', 'wb') as f:
-        f.write(img)
 
-    # with Telegram() as tele:
-    #     tele.send_photo(img, caption=caption)
+    with Telegram() as tele:
+        tele.send_photo(img, caption=caption)
