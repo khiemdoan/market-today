@@ -5,6 +5,7 @@ from typing import Self
 import pandas as pd
 from httpx import Client
 from pydantic import BaseModel, Field
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 
 class OhlcResponse(BaseModel):
@@ -24,6 +25,7 @@ class DnseClient(AbstractContextManager):
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self._client.close()
 
+    @retry(reraise=True, stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, max=10))
     def _get_data(self, url: str, params: dict) -> pd.DataFrame:
         resp = self._client.get(url, params=params)
         print(resp.url)
