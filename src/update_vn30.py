@@ -2,13 +2,13 @@ __author__ = 'Khiem Doan'
 __github__ = 'https://github.com/khiemdoan'
 __email__ = 'doankhiem.crazy@gmail.com'
 
-from clients import DnseClient
+from clients import VciClient
 from graph import draw_klines
 from telegram import Telegram
 from templates import Render
 
 if __name__ == '__main__':
-    with DnseClient() as client:
+    with VciClient() as client:
         df = client.get_vn30()
 
     date = df.open_time.iloc[-1]
