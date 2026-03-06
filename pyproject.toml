@@ -17,6 +17,7 @@ dependencies = [
     "httpx[http2]==0.28.1",
     "tenacity==9.1.4",
     "fake-useragent==2.2.0",
+    "ua-generator==2.0.22",
     "pandas==3.0.1",
     "pandera[pandas]==0.29.0",
     "matplotlib==3.10.8",
