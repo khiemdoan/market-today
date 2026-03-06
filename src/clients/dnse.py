@@ -7,6 +7,8 @@ from httpx import Client
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential
 
+from .utils import random_user_agent
+
 
 class OhlcResponse(BaseModel):
     time: list[datetime] = Field(alias='t')
@@ -19,7 +21,13 @@ class OhlcResponse(BaseModel):
 
 class DnseClient(AbstractContextManager):
     def __enter__(self) -> Self:
-        self._client = Client(base_url='https://api.dnse.com.vn', http2=True)
+        self._client = Client(
+            base_url='https://api.dnse.com.vn',
+            http2=True,
+            event_hooks={
+                'request': [random_user_agent],
+            },
+        )
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
