@@ -8,10 +8,12 @@ __all__ = [
     'CoinMarketCapClient',
     'DnseClient',
     'YahooClient',
+    'VciClient',
 ]
 
 from .binance import BinanceClient
 from .bybit import BybitClient
 from .coinmarketcap import CoinMarketCapClient
 from .dnse import DnseClient
+from .vci import VciClient
 from .yahoo import YahooClient
