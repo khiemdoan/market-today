@@ -1,13 +1,10 @@
-from contextlib import AbstractContextManager
 from datetime import datetime
-from typing import Self
 
 import pandas as pd
-from httpx import Client
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from .utils import random_user_agent
+from .base import BaseClient
 
 
 class OhlcResponse(BaseModel):
@@ -19,19 +16,8 @@ class OhlcResponse(BaseModel):
     volume: list[int] = Field(alias='v')
 
 
-class DnseClient(AbstractContextManager):
-    def __enter__(self) -> Self:
-        self._client = Client(
-            base_url='https://api.dnse.com.vn',
-            http2=True,
-            event_hooks={
-                'request': [random_user_agent],
-            },
-        )
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        self._client.close()
+class DnseClient(BaseClient):
+    base_url: str = 'https://api.dnse.com.vn'
 
     @retry(reraise=True, stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, max=10))
     def _get_data(self, url: str, params: dict) -> pd.DataFrame:

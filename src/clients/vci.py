@@ -1,13 +1,14 @@
-from contextlib import AbstractContextManager
+__author__ = 'Khiem Doan'
+__github__ = 'https://github.com/khiemdoan'
+__email__ = 'doankhiem.crazy@gmail.com'
+
 from datetime import datetime, timedelta
-from typing import Self
 
 import pandas as pd
-from httpx import Client
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from .utils import random_user_agent
+from .base import BaseClient
 
 
 class OhlcData(BaseModel):
@@ -20,19 +21,8 @@ class OhlcData(BaseModel):
     volume: list[int] = Field(alias='v')
 
 
-class VciClient(AbstractContextManager):
-    def __enter__(self) -> Self:
-        self._client = Client(
-            base_url='https://trading.vietcap.com.vn',
-            http2=True,
-            event_hooks={
-                'request': [random_user_agent],
-            },
-        )
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        self._client.close()
+class VciClient(BaseClient):
+    base_url: str = 'https://trading.vietcap.com.vn'
 
     @retry(reraise=True, stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, max=10))
     def get_vn30(self) -> pd.DataFrame:
