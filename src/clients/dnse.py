@@ -38,6 +38,7 @@ class DnseClient(BaseClient):
             }
         )
         df['open_time'] = pd.to_datetime(df['time']).dt.tz_localize(None)
+        df = df.drop(columns=['time'])  # Drop the original time column
         df['volume'] = df['volume'].astype('float64')
         return df
 
