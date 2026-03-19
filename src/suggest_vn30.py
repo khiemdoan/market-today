@@ -12,7 +12,8 @@ from matplotlib import pyplot as plt
 from pydantic import BaseModel
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from clients.dnse import DnseClient
+from clients import DnseClient
+from clients import VciClient
 from telegram import Telegram
 
 vn30_list = (
@@ -98,28 +99,27 @@ def fetch_stock_data(symbol: str) -> pd.DataFrame:
     return df
 
 
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, max=10))
-def fetch_stock_data_dnse(symbol: str) -> pd.DataFrame:
-    logger.info(f'Fetching data for {symbol} from DNSE')
+def fetch_stock_data_vci(symbol: str) -> pd.DataFrame:
+    logger.info(f'Fetching data for {symbol} from VCI')
 
-    with DnseClient() as client:
-        df = client.get_stock(symbol, days=130)
+    with VciClient() as client:
+        dfs = client.get_stocks([symbol], days=130)
 
     # Rename 'time' to 'open_time' to match VPS format
-    df = df.rename(columns={'time': 'open_time'})
+    df = dfs[symbol].rename(columns={'time': 'open_time'})
 
     df['rsi'] = talib.RSI(df['close'], timeperiod=14)
     df['upper'], df['middle'], df['lower'] = talib.BBANDS(df['close'], timeperiod=14)
     df['ratio'] = (df['close'] - df['middle']) / (df['upper'] - df['middle'])
 
-    logger.info(f'Successfully fetched data for {symbol} from DNSE')
+    logger.info(f'Successfully fetched data for {symbol} from VCI')
 
     return df
 
 
 def main():
     with ThreadPoolExecutor(max_workers=10) as executor:
-        data = list(executor.map(fetch_stock_data_dnse, vn30_list))
+        data = list(executor.map(fetch_stock_data_vci, vn30_list))
 
     ohlc_data: dict[str, pd.DataFrame] = {}
     for symbol, df in zip(vn30_list, data):

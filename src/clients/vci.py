@@ -60,3 +60,45 @@ class VciClient(BaseClient):
                 return df
 
         raise ValueError('VN30 data not found')
+
+    @retry(reraise=True, stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, max=10))
+    def get_stocks(self, symbols: list[str], days: int = 100) -> dict[str, pd.DataFrame]:
+        headers = {
+            'Referer': 'https://trading.vietcap.com.vn/priceboard'
+        }
+        data = {
+            'timeFrame': 'ONE_DAY',
+            'symbols': symbols,
+            'countBack': days,
+            'to': int(datetime.now().timestamp()),
+        }
+        resp = self._client.post('/api/chart/OHLCChart/gap-chart', headers=headers, json=data)
+        resp.raise_for_status()
+
+        data = resp.json()
+        data = {
+            d['symbol']: OhlcData.model_validate(d)
+            for d in data
+        }
+
+        data = {
+            symbol: pd.DataFrame(
+                {
+                    'open_time': ohlc.time,
+                    'open': ohlc.open,
+                    'high': ohlc.high,
+                    'low': ohlc.low,
+                    'close': ohlc.close,
+                    'volume': ohlc.volume,
+                }
+            )
+            for symbol, ohlc in data.items()
+        }
+
+        return {
+            symbol: df.assign(
+                open_time=pd.to_datetime(df['open_time']).dt.tz_localize(None),
+                volume=df['volume'].astype('float64'),
+            )
+            for symbol, df in data.items()
+        }
