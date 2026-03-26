@@ -1,3 +1,7 @@
+__author__ = 'Khiem Doan'
+__github__ = 'https://github.com/khiemdoan'
+__email__ = 'doankhiem.crazy@gmail.com'
+
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from io import BytesIO
@@ -12,7 +16,6 @@ from matplotlib import pyplot as plt
 from pydantic import BaseModel
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from clients import DnseClient
 from clients import VciClient
 from telegram import Telegram
 
@@ -155,7 +158,7 @@ def main():
             bb = ohlc_data[symbol]['ratio'].iloc[-1]
 
             sns.lineplot(ohlc_data[symbol], x='open_time', y='close', ax=axes[i, j])
-            axes[i, j].set_title(f'{symbol} ({delta_percent:+.2f}%) | RSI: {rsi:.2f} | BB: {bb:.2f}', fontsize=15)
+            axes[i, j].set_title(f'{symbol} {current_close:.2f} ({delta_percent:+.2f}%) | RSI: {rsi:.2f} | BB: {bb:+.2f}', fontsize=15)
             axes[i, j].tick_params(axis='y', labelsize=10)
             axes[i, j].tick_params(axis='x', labelrotation=30, labelsize=10)
 
