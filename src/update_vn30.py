@@ -22,6 +22,7 @@ if __name__ == '__main__':
             'date': date,
             'value': value,
             'delta': value - value_prev,
+            'percent': (value - value_prev) / value_prev * 100,
         },
     )
 
