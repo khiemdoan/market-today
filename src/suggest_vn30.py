@@ -158,7 +158,10 @@ def main():
             bb = ohlc_data[symbol]['ratio'].iloc[-1]
 
             sns.lineplot(ohlc_data[symbol], x='open_time', y='close', ax=axes[i, j])
-            axes[i, j].set_title(f'{symbol} {current_close:.2f} ({delta_percent:+.2f}%) | RSI: {rsi:.2f} | BB: {bb:+.2f}', fontsize=15)
+            axes[i, j].set_title(
+                f'{symbol} {current_close / 1_000:.2f} ({delta_percent:+.2f}%) | RSI: {rsi:.2f} | BB: {bb:+.2f}',
+                fontsize=15,
+            )
             axes[i, j].tick_params(axis='y', labelsize=10)
             axes[i, j].tick_params(axis='x', labelrotation=30, labelsize=10)
 
