@@ -7,7 +7,7 @@ from contextlib import AbstractContextManager
 from io import BytesIO
 from typing import Any, Literal, Self
 
-from httpx import Client
+from niquests import Session
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -30,7 +30,7 @@ class Telegram(AbstractContextManager):
         self._settings = TelegramSettings()
 
     def __enter__(self) -> Self:
-        self._client = Client(base_url='https://api.telegram.org', http2=True)
+        self._client = Session(base_url='https://api.telegram.org', resolver='dou://1.1.1.1:8853')
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
