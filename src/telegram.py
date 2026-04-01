@@ -30,7 +30,7 @@ class Telegram(AbstractContextManager):
         self._settings = TelegramSettings()
 
     def __enter__(self) -> Self:
-        self._client = Session(base_url='https://api.telegram.org', resolver='doh+cloudflare://')
+        self._client = Session(base_url='https://api.telegram.org', resolver=['doh+google://', 'doh+cloudflare://'])
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:

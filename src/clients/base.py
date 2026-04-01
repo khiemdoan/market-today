@@ -15,7 +15,7 @@ class BaseClient(AbstractContextManager):
     def __enter__(self) -> Self:
         self._client = Session(
             base_url=self.base_url,
-            resolver='dou://1.1.1.1:8853',
+            resolver=['doh+google://', 'doh+cloudflare://'],
             hooks={
                 'pre_request': [self._random_user_agent],
             },
