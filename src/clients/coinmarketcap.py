@@ -2,13 +2,10 @@ __author__ = 'Khiem Doan'
 __github__ = 'https://github.com/khiemdoan'
 __email__ = 'doankhiem.crazy@gmail.com'
 
-from contextlib import AbstractContextManager
 from datetime import datetime
-from typing import Self
 
-from fake_useragent import UserAgent
-from httpx import Client, Request
 from pydantic import BaseModel, Field
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from .base import BaseClient
 
@@ -93,6 +90,7 @@ class RsiOverallResponse(BaseModel):
 class CoinMarketCapClient(BaseClient):
     base_url = 'https://api.coinmarketcap.com'
 
+    @retry(reraise=True, stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, max=10))
     def fetch_overral_rsi(self) -> RsiOverralDetail:
         params = {
             'timeframe': '1h',
@@ -106,6 +104,7 @@ class CoinMarketCapClient(BaseClient):
         resp = RsiOverallResponse.model_validate_json(resp.content)
         return resp.data.overall
 
+    @retry(reraise=True, stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, max=10))
     def fetch_rsi(self) -> list[Rsi]:
         params = {
             'limit': 10,
