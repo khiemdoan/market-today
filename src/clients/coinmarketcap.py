@@ -10,6 +10,8 @@ from fake_useragent import UserAgent
 from httpx import Client, Request
 from pydantic import BaseModel, Field
 
+from .base import BaseClient
+
 
 class Rsi(BaseModel):
     rank: int
@@ -88,25 +90,8 @@ class RsiOverallResponse(BaseModel):
     data: RsiOverall
 
 
-class CoinMarketCapClient(AbstractContextManager):
-    def __init__(self) -> None:
-        self._ua = UserAgent()
-
-    def __enter__(self) -> Self:
-        self._client = Client(
-            base_url='https://api.coinmarketcap.com',
-            http2=True,
-            event_hooks={
-                'request': [self._random_user_agent],
-            },
-        )
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        self._client.close()
-
-    def _random_user_agent(self, request: Request) -> None:
-        request.headers['User-Agent'] = self._ua.random
+class CoinMarketCapClient(BaseClient):
+    base_url = 'https://api.coinmarketcap.com'
 
     def fetch_overral_rsi(self) -> RsiOverralDetail:
         params = {

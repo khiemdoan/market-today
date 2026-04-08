@@ -23,3 +23,11 @@ Install dependencies
 ```bash
 uv sync -v --group tools --group testing --group linting
 ```
+
+## Unit test
+
+Ensure all tests pass
+
+```bash
+uv run --with pytest pytest
+```
