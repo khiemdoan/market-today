@@ -29,5 +29,5 @@ uv sync -v --group tools --group testing --group linting
 Ensure all tests pass
 
 ```bash
-uv run --with pytest pytest
+uv run --frozen pytest
 ```
