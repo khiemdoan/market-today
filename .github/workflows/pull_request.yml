@@ -21,4 +21,4 @@ jobs:
         with:
           enable-cache: true
       - name: Run tests
-        run: uv run --frozen pytest
+        run: uv run --frozen --with pytest pytest
