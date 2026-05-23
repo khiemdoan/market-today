@@ -5,15 +5,15 @@ on:
     - cron: 0 * * * *
 
 jobs:
-  update-data:
+  update-p2p:
     if: github.repository_owner == 'khiemdoan'
     runs-on: ubuntu-slim
     steps:
       - name: Checkout repo content
-        uses: actions/checkout@v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           enable-cache: true
 
@@ -26,9 +26,6 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
-      - name: Get current time
-        run: echo "time=$(date +'%Y-%m-%d %H-%M-%S')" >> $GITHUB_ENV
-
       - name: Commit changes
         run: |
           if git diff --quiet; then
@@ -39,5 +36,5 @@ jobs:
           git config --global user.email "action@github.com"
           git config --global user.name "GitHub Action"
           git add .
-          git commit -m "Updated ${{ env.time }}"
+          git commit -m "Updated $(date +'%Y-%m-%d %H:%M:%S')"
           git push origin main
